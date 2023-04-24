@@ -10,7 +10,7 @@
         {
             "pacSelector": "tenant",
             "cloud": "AzureCloud",
-            "tenantId": "77777777-8888-9999-1111-222222222222",
+            "tenantId": "2b3ca175-6de6-4b3d-8e7c-d362a6341e01",
             "deploymentRootScope": "/providers/Microsoft.Management/managementGroups/Contoso-Root", // replaces rootScope
             "inheritedDefinitionsScopes": [], // [optional] inherited definition scopes used but not managed by this repository, scopes must be visible from deploymentScope
             "desiredState": { // [optional]
