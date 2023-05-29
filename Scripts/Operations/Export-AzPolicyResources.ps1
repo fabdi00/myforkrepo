@@ -52,8 +52,7 @@ Export-AzPolicyResources -definitionsRootFolder ./Definitions -outputFolder ./Ou
 Export-AzPolicyResources -definitionsRootFolder ./Definitions -outputFolder ./Outputs -interactive $true -includeChildScopes -includeAutoAssigned -exemptionFiles csv -fileExtension jsonc -mode export -inputPacSelector 'EPAC-Environment-1'
 
 .LINK
-https://azure.github.io/enterprise-azure-policy-as-code/extract-existing-policy-resources/
-
+https://azure.github.io/enterprise-azure-policy-as-code/extract-existing-policy-resources
 #>
 [CmdletBinding()]
 param (
@@ -188,7 +187,7 @@ if ($mode -ne 'exportFromRawFiles') {
 
             $scopeTable = Get-AzScopeTree -pacEnvironment $pacEnvironment
             $skipExemptions = $exemptionFiles -eq "none"
-            $deployed = Get-AzPolicyResources -pacEnvironment $pacEnvironment -scopeTable $scopeTable -skipRoleAssignments -skipExemptions:$skipExemptions -collectAllPolicies:$includeChildScopes
+            $deployed = Get-AzPolicyResources -pacEnvironment $pacEnvironment -scopeTable $scopeTable -skipExemptions:$skipExemptions -collectAllPolicies:$includeChildScopes
 
             $policyDefinitions = $deployed.policydefinitions.custom
             $policySetDefinitions = $deployed.policysetdefinitions.custom
@@ -491,14 +490,14 @@ foreach ($pacEnvironment in $pacEnvironments.Values) {
                 }
 
                 $identityEntry = $null
-                $identityType = $properties.identity.type
+                $identityType = $policyAssignment.identity.type
                 $location = $policyAssignment.location
                 if ($location -eq $pacEnvironment.managedIdentityLocation) {
                     $location = ""
                 }
                 if ($identityType -eq "UserAssigned") {
-                    $userAssignedIdentities = $properties.identity.userAssignedIdentities
-                    $identityProperty = $userAssignedIdentities.psobject.properties[0]
+                    $userAssignedIdentities = $policyAssignment.identity.userAssignedIdentities
+                    $identityProperty = $userAssignedIdentities.psobject.Properties
                     $identity = $identityProperty.Name
                     $identityEntry = @{
                         userAssigned = $identity

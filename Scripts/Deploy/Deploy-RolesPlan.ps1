@@ -1,4 +1,32 @@
 #Requires -PSEdition Core
+<#
+.SYNOPSIS 
+    Deploys Role assignments from a plan file.  
+
+.PARAMETER pacEnvironmentSelector
+    Defines which Policy as Code (PAC) environment we are using, if omitted, the script prompts for a value. The values are read from `$DefinitionsRootFolder/global-settings.jsonc.
+
+.PARAMETER definitionsRootFolder
+    Definitions folder path. Defaults to environment variable `$env:PAC_DEFINITIONS_FOLDER or './Definitions'.
+
+.PARAMETER inputFolder
+    Input folder path for plan files. Defaults to environment variable `$env:PAC_INPUT_FOLDER, `$env:PAC_OUTPUT_FOLDER or './Output'.
+
+.PARAMETER interactive
+    Use switch to indicate interactive use
+
+.EXAMPLE
+    Deploy-RolesPlan.ps1 -pacEnvironmentSelector "dev" -definitionsRootFolder "C:\PAC\Definitions" -inputFolder "C:\PAC\Output" -interactive
+    Deploys Role assignments from a plan file.
+
+.EXAMPLE
+    Deploy-RolesPlan.ps1 -interactive
+    Deploys Role assignments from a plan file. The script prompts for the PAC environment and uses the default definitions and input folders.
+
+.LINK
+    https://azure.github.io/enterprise-azure-policy-as-code/#deployment-scripts
+
+#>
 
 [CmdletBinding()]
 param (
@@ -86,18 +114,23 @@ else {
             }
             Write-Information "$($policyAssignment.Properties.displayName): $($roleAssignment.roleDisplayName)($($roleAssignment.roleDefinitionId)) at $($roleAssignment.scope)"
             $splat = Get-FilteredHashTable $roleAssignment -splatTransform $splatTransform
+            if (Get-AzRoleAssignment -Scope $splat.Scope -ObjectId $splat.ObjectId -RoleDefinitionId $splat.RoleDefinitionId) {
+                Write-Information "Role assignment already exists"
+            }
+            else {
+                while ($retries -le $retriesLimit) {
 
-            while ($retries -le $retriesLimit) {
-
-                $result = New-AzRoleAssignment @splat -WarningAction SilentlyContinue
-                if ($null -ne $result) {
-                    break
-                }
-                else {
-                    Start-Sleep -Seconds 10
-                    $retries++
+                    $result = New-AzRoleAssignment @splat -WarningAction SilentlyContinue
+                    if ($null -ne $result) {
+                        break
+                    }
+                    else {
+                        Start-Sleep -Seconds 10
+                        $retries++
+                    }
                 }
             }
+            
         }
     }
     Write-Information ""

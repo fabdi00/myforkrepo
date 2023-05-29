@@ -18,8 +18,8 @@ Assignment JSON is hierarchical for efficient definitions, avoiding duplication 
   "children": [
     {
       "nodeName": "Prod/",
-      "definitionEntry": {
-        "policySetName": "org-sec-initiative",
+      "parameters": {
+        "some-effect": "Deny",
       }
     }
   ]
@@ -821,7 +821,7 @@ An example of a policy assignment for a single policy definition with a default 
     },
     "nonComplianceMessages": [ // Array of nonComplianceMessages
         {
-            "Message": "Update non-compliance message" // Default nonComplianceMessage
+            "message": "Update non-compliance message" // Default nonComplianceMessage
         }
     ],
     "parameters": {}

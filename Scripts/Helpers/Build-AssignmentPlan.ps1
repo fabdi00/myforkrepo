@@ -93,7 +93,7 @@ function Build-AssignmentPlan {
             Write-Error "Assignment JSON file '$($assignmentFile.FullName)' is not valid." -ErrorAction Stop
         }
         $assignmentObject = $Json | ConvertFrom-Json -AsHashtable
-        Remove-NullOrEmptyFields $assignmentObject
+        # Remove-NullFields $assignmentObject
 
         # Collect all assignment definitions (values)
         $rootAssignmentDefinition = @{
@@ -134,7 +134,7 @@ function Build-AssignmentPlan {
         $isUserAssignedAny = $false
         foreach ($assignment in $assignmentsList) {
 
-            Remove-NullOrEmptyFields $assignment -nullOnly
+            # Remove-NullFields $assignment
             $id = $assignment.id
             $allAssignments[$id] = $assignment
             $displayName = $assignment.displayName
@@ -145,6 +145,15 @@ function Build-AssignmentPlan {
             $scope = $assignment.scope
             $notScopes = $assignment.notScopes
             $enforcementMode = $assignment.enforcementMode
+            if ($null -ne $assignment.nonComplianceMessages) {
+                if ($assignment.nonComplianceMessages.ContainsKey("Key")) {
+                    $obj = @{
+                        message                     = $assignment.nonComplianceMessages.Value
+                        policyDefinitionReferenceId = $assignment.nonComplianceMessages.policyDefinitionReferenceId
+                    }
+                    $assignment.nonComplianceMessages = @($obj)
+                }
+            }
             $nonComplianceMessages = $assignment.nonComplianceMessages
             $overrides = $assignment.overrides
             $resourceSelectors = $assignment.resourceSelectors
@@ -168,9 +177,52 @@ function Build-AssignmentPlan {
                     -existingMetadataObj $deployedPolicyAssignmentProperties.metadata `
                     -definedMetadataObj $metadata
                 $enforcementModeMatches = $enforcementMode -eq $deployedPolicyAssignmentProperties.EnforcementMode
+                # Rebuild the non-compliance object
+                $nonComplianceObject = @()
+                if ($nonComplianceMessages.length -gt 1) {
+                    foreach ($nc in $nonComplianceMessages) {
+                        $obj = @{
+                            message                     = $nc.message
+                            policyDefinitionReferenceId = $nc.policyDefinitionReferenceId
+                        }
+                        $nonComplianceObject += $obj
+                    }
+                }
+                else {
+                    if ($null -ne $nonComplianceMessages) {
+                        if ($null -ne $nonComplianceMessages[0].Keys) {
+                            foreach ($nc in $nonComplianceMessages) {
+                                if ($nc.ContainsKey("Key")) {
+                                    $obj = @{
+                                        message                     = $nc.Value
+                                        policyDefinitionReferenceId = $nc.policyDefinitionReferenceId
+                                    }
+                                    $nonComplianceObject += $obj
+                                }
+                                else {
+                                    $obj = @{
+                                        message                     = $nc.message
+                                        policyDefinitionReferenceId = $nc.policyDefinitionReferenceId
+                                    }
+                                    $nonComplianceObject += $obj
+                                }
+                                
+                            } 
+                        }
+                        else {
+                            foreach ($nc in $nonComplianceMessages.Keys) {
+                                $obj = @{
+                                    message                     = $nonComplianceMessages[0][$nc]
+                                    policyDefinitionReferenceId = $nc.policyDefinitionReferenceId
+                                }
+                                $nonComplianceObject += $obj
+                            }
+                        }
+                    }
+                }
                 $nonComplianceMessagesMatches = Confirm-ObjectValueEqualityDeep `
                     $deployedPolicyAssignmentProperties.nonComplianceMessages `
-                    $nonComplianceMessages
+                    $nonComplianceObject
                 $overridesMatch = Confirm-ObjectValueEqualityDeep `
                     $deployedPolicyAssignmentProperties.overrides `
                     $overrides

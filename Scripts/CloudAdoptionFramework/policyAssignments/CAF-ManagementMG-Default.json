@@ -26,7 +26,12 @@
                         "automationAccountName": "",
                         "automationRegion": "",
                         "dataRetention": ""
-                    }
+                    },
+                    "nonComplianceMessages": [
+                        {
+                            "message": "Log Analytics workspace and automation account must be configured to centralize logs and monitoring."
+                        }
+                    ]
                 }
             ]
         }
